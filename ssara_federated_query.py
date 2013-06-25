@@ -68,15 +68,14 @@ Usage Examples:
     ssara_federated_query.py --platform=ENVISAT,ERS-1,ERS-2 -t 170 -f 2925 --collectionName="WInSAR ESA,EarthScope ESA" --kml
     ssara_federated_query.py --platform=ENVISAT --intersectsWith=POLYGON((-118.3 33.7, -118.3 33.8, -118.0 33.8, -118.0 33.7, -118.3 33.7)) --kml
     
-  To download data, add the --download option and your user credentials (--username= & --password= for UNAVCO and --ssuser= & --sspass= for Supersites)
+  To download data, add the --download option and your user credentials (--unavuser=/--unavpass= for UNAVCO, --asfuser=/--asfpass= for ASF, and --ssuser=/--sspass= for Supersites)
     ssara_federated_query.py --sat=ENVISAT -t 170 -f 2925 --download --unavuser=USERNAME --unavpass=PASSWORD
     ssara_federated_query.py --sat=ENVISAT -t 170,392 -f 2925,657-693 -s 2003-01-01 -e 2008-01-01 --download --unavuser=USERNAME --unavpass=PASSWORD
     ssara_federated_query.py --sat=ENVISAT,ERS-1,ERS-2 -t 170 -f 2925 --collection="WInSAR ESA,EarthScope ESA" --download --unavuser=USERNAME --unavpass=PASSWORD
 """
     parser = MyParser(description=desc, epilog=epi, version='0.1rc1')
     querygroup = optparse.OptionGroup(parser, "Query Parameters", "These options are used for the API query.  "  
-                                      "A good start would be a combination of track and frame or search an area of interest with a polygon (--poly) "
-                                      "or bounding box (--bbox).  Use options to limit what is returned by the search. These options act as a way "
+                                      "Use options to limit what is returned by the search. These options act as a way "
                                       "to filter the results and narrow down the search results.")
     
     querygroup.add_option('-p','--platform', action="store", dest="platform", metavar='<ARG>', default='', help='List of platforms (ie ALOS, ENVISAT, ERS-2...')
@@ -90,10 +89,10 @@ Usage Examples:
     querygroup.add_option('--beamSwath', action="store", dest="beamSwath", metavar='<ARG>', default='',help='list of swaths: S1, S2, F1, F4...')
     querygroup.add_option('--flightDirection', action="store", dest="flightDirection", metavar='<ARG>', default='',help='Flight Direction (A or D, default is both)')
     querygroup.add_option('--lookDirection', action="store", dest="lookDirection", metavar='<ARG>', default='',help='Look Direction (L or R, default is both)')
-    querygroup.add_option('--polarization', action="store", dest="polarizationName", metavar='<ARG>', default='',help='single or as a list')
+    querygroup.add_option('--polarization', action="store", dest="polarization", metavar='<ARG>', default='',help='single or as a list')
     querygroup.add_option('--collectionName', action="store", dest="collectionName", metavar='<ARG>', default='',help='single collection or list of collections')  
-    querygroup.add_option('--processingLevel', action="store", dest="processing", help='L0, L1, L1.0...',default='L1.0,L0')
-    querygroup.add_option('--maxResults', action="store", dest="maxResults", type="int", metavar='<ARG>', help='maximum number of results to return')
+    querygroup.add_option('--processingLevel', action="store", dest="processingLevel", help='L0, L1, L1.0... (default=%default)', default='L1.0,L0')
+    querygroup.add_option('--maxResults', action="store", dest="maxResults", type="int", metavar='<ARG>', help='maximum number of results to return (from each archive)')
     parser.add_option_group(querygroup)
 
     resultsgroup = optparse.OptionGroup(parser, "Result Options", "These options handle the results returned by the API query")
@@ -117,9 +116,8 @@ Usage Examples:
 
     ### QUERY THE APIs AND GET THE JSON RESULTS ###
     params = urllib.urlencode(query_dict)
-    # HARDWIRED PARAMETER(S): ARCHIVE STATUS AND DATAFILE FORMAT
-    ssara_url = "http://54.235.157.42/ssara/sar/search?output=json&%s" % params
-#    print ssara_url
+#    ssara_url = "http://54.235.157.42/ssara/sar/search?output=json&%s" % params
+    ssara_url = "http://www.unavco.org/ws/brokered/ssara/sar/search?%s" % params
     print "Running SSARA API Query"
     t = time.time()
     f = urllib2.urlopen(ssara_url)
@@ -130,22 +128,17 @@ Usage Examples:
     ### ORDER THE SCENES BY STARTTIME, NEWEST FIRST ###
     scenes = sorted(scenes, key=operator.itemgetter('startTime'), reverse=True)
     print "Found %d scenes" % len(scenes)
-#    collections = []
-#    for key, items in itertools.groupby(sorted(scenes, key=operator.itemgetter('collectionName')), operator.itemgetter('collectionName')):
-#        collections.append(list(items))
-#    for c in collections:
-#        print c[0]['collectionName']
     
     if not opt_dict['kml'] and not opt_dict['download'] and not opt_dict['print']:
         print "You did not specify the --kml, --print, or --download option, so there really is nothing else I can do for you now"
     if opt_dict['print']:
         for r in sorted(scenes, key=operator.itemgetter('startTime')):
-            print ",".join(str(x) for x in [r['collectionName'], r['platformName'], r['orbit'], r['startTime'], r['stopTime'], r['relativeOrbit'], r['firstFrame'], r['finalFrame'], r['beamMode'], r['beamSwath'], r['flightDirection'], r['lookDirection'],r['polarization'], r['downloadUrl']])
-
-    ### MAKE A KML FILE WITH THE QUERY RESULTS ###
+            print ",".join(str(x) for x in [r['collectionName'], r['platform'], r['absoluteOrbit'], r['startTime'], r['stopTime'], r['relativeOrbit'], r['firstFrame'], r['finalFrame'], r['beamMode'], r['beamSwath'], r['flightDirection'], r['lookDirection'],r['polarization'], r['downloadUrl']])
+    ### GET A KML FILE, THE FEDERATED API HAS THIS OPTION ALREADY, SO MAKE THE SAME CALL AGAIN WITH output=kml OPTION ###
     if opt_dict['kml']:
         ssara_url = "http://54.235.157.42/ssara/sar/search?output=kml&%s" % params
         print "Getting KML"
+        print ssara_url
         t = time.time()
         req = urllib2.Request(ssara_url)
         r = urllib2.urlopen(req)
@@ -154,7 +147,6 @@ Usage Examples:
         f = open(localName, 'wb')
         f.write(r.read())
         f.close() 
-
     ### DOWNLOAD THE DATA FROM THE QUERY RESULTS ### 
     if opt_dict['download']:
         #a couple quick checks to make sure everything is in order
@@ -205,10 +197,6 @@ def asf_dl(d, opt_dict):
     user_name = opt_dict['asfuser']
     user_password = opt_dict['asfpass']
     url = d['downloadUrl']
-    if not url:
-        with open('NO_URL.txt', 'a') as E:
-            E.write("No URL for %s scene %d in collection %s\n" % (d['missionName'], d['sceneId'], d['collectionName']))
-        return
     filename = os.path.basename(url)
     o = urllib2.build_opener( urllib2.HTTPCookieProcessor() )
     urllib2.install_opener(o)
