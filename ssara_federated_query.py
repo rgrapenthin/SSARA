@@ -116,7 +116,6 @@ Usage Examples:
 
     ### QUERY THE APIs AND GET THE JSON RESULTS ###
     params = urllib.urlencode(query_dict)
-#    ssara_url = "http://54.235.157.42/ssara/sar/search?output=json&%s" % params
     ssara_url = "http://www.unavco.org/ws/brokered/ssara/sar/search?%s" % params
     print "Running SSARA API Query"
     t = time.time()
@@ -136,9 +135,8 @@ Usage Examples:
             print ",".join(str(x) for x in [r['collectionName'], r['platform'], r['absoluteOrbit'], r['startTime'], r['stopTime'], r['relativeOrbit'], r['firstFrame'], r['finalFrame'], r['beamMode'], r['beamSwath'], r['flightDirection'], r['lookDirection'],r['polarization'], r['downloadUrl']])
     ### GET A KML FILE, THE FEDERATED API HAS THIS OPTION ALREADY, SO MAKE THE SAME CALL AGAIN WITH output=kml OPTION ###
     if opt_dict['kml']:
-        ssara_url = "http://54.235.157.42/ssara/sar/search?output=kml&%s" % params
+        ssara_url = "http://www.unavco.org/ws/brokered/ssara/sar/search?output=kml&%s" % params
         print "Getting KML"
-        print ssara_url
         t = time.time()
         req = urllib2.Request(ssara_url)
         r = urllib2.urlopen(req)
