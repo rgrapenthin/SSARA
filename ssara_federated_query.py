@@ -93,6 +93,14 @@ Usage Examples:
     querygroup.add_option('--collectionName', action="store", dest="collectionName", metavar='<ARG>', default='',help='single collection or list of collections')  
     querygroup.add_option('--processingLevel', action="store", dest="processingLevel", help='Processing Level of data: L0, L1, L1.0, SLC... ' )
     querygroup.add_option('--maxResults', action="store", dest="maxResults", type="int", metavar='<ARG>', help='maximum number of results to return (from each archive)')
+    querygroup.add_option('--minBaselinePerp', action="store", dest="minBaselinePerp", metavar='<ARG>', help='min perpendicular baseline of granule')
+    querygroup.add_option('--maxBaselinePerp', action="store", dest="maxBaselinePerp", metavar='<ARG>', help='max perpendicular baseline of granule')
+    querygroup.add_option('--minFaradayRotation', action="store", dest="minFaradayRotation", metavar='<ARG>', help='min faraday rotation of granule')
+    querygroup.add_option('--maxFaradayRotation', action="store", dest="maxFaradayRotation", metavar='<ARG>', help='max faraday rotation of granule')
+    querygroup.add_option('--minDoppler', action="store", dest="minDoppler", metavar='<ARG>', help='min doppler of granule')
+    querygroup.add_option('--maxDoppler', action="store", dest="maxDoppler", metavar='<ARG>', help='max doppler of granule')
+    querygroup.add_option('--minInsarStackSize', action="store", dest="minInsarStackSize", metavar='<ARG>', help='min stack size')
+    querygroup.add_option('--maxInsarStackSize', action="store", dest="maxInsarStackSize", metavar='<ARG>', help='max stack size')
     parser.add_option_group(querygroup)
 
     resultsgroup = optparse.OptionGroup(parser, "Result Options", "These options handle the results returned by the API query")
@@ -109,10 +117,33 @@ Usage Examples:
     parser.add_option_group(resultsgroup) 
     opts, remainder = parser.parse_args(argv)
     opt_dict= vars(opts)
+
+    ### BUILD DICTIONARY WITH QUERY FIELDS TO THE API ###
     query_dict = {}
-    for k,v in opt_dict.iteritems():
-        if v:
-            query_dict[k] = v
+    if opt_dict['platform']: query_dict['platform'] = opt_dict['platform']
+    if opt_dict['absoluteOrbit']: query_dict['absoluteOrbit'] = opt_dict['absoluteOrbit']
+    if opt_dict['relativeOrbit']: query_dict['relativeOrbit'] = opt_dict['relativeOrbit']
+    if opt_dict['frame']: query_dict['frame'] = opt_dict['frame']
+    if opt_dict['start']: query_dict['start'] = opt_dict['start']
+    if opt_dict['end']: query_dict['end'] = opt_dict['end']
+    if opt_dict['beamMode']: query_dict['beamMode'] = opt_dict['beamMode']
+    if opt_dict['beamSwath']: query_dict['beamSwath'] = opt_dict['beamSwath']
+    if opt_dict['flightDirection']: query_dict['flightDirection'] = opt_dict['flightDirection']
+    if opt_dict['lookDirection']: query_dict['lookDirection'] = opt_dict['lookDirection']
+    if opt_dict['polarization']: query_dict['polarization'] = opt_dict['polarization']
+    if opt_dict['collectionName']: query_dict['collectionName'] = opt_dict['collectionName']
+    if opt_dict['processingLevel']: query_dict['processingLevel'] = opt_dict['processingLevel']
+    if opt_dict['maxResults']: query_dict['maxResults'] = opt_dict['maxResults']
+    if opt_dict['intersectsWith']: query_dict['intersectsWith'] = opt_dict['intersectsWith']
+    if opt_dict['minBaselinePerp']: query_dict['minBaselinePerp'] = opt_dict['minBaselinePerp']
+    if opt_dict['maxBaselinePerp']: query_dict['maxBaselinePerp'] = opt_dict['maxBaselinePerp']
+    if opt_dict['minDoppler']: query_dict['minDoppler'] = opt_dict['minDoppler']
+    if opt_dict['maxDoppler']: query_dict['maxDoppler'] = opt_dict['maxDoppler']
+    if opt_dict['minFaradayRotation']: query_dict['minFaradayRotation'] = opt_dict['minFaradayRotation']
+    if opt_dict['maxFaradayRotation']: query_dict['maxFaradayRotation'] = opt_dict['maxFaradayRotation']
+    if opt_dict['minInsarStackSize']: query_dict['minInsarStackSize'] = opt_dict['minInsarStackSize']
+    if opt_dict['maxInsarStackSize']: query_dict['maxInsarStackSize'] = opt_dict['maxInsarStackSize']
+
 
     ### QUERY THE APIs AND GET THE JSON RESULTS ###
     params = urllib.urlencode(query_dict)
@@ -121,7 +152,8 @@ Usage Examples:
     t = time.time()
     f = urllib2.urlopen(ssara_url)
     json_data = f.read()
-    scenes = json.loads(json_data)
+    data = json.loads(json_data)
+    scenes = data['resultList']
     print "SSARA API query: %f seconds" % (time.time()-t)
 
     ### ORDER THE SCENES BY STARTTIME, NEWEST FIRST ###
