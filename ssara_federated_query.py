@@ -228,7 +228,7 @@ def asf_dl(d, opt_dict):
     user_password = opt_dict['asfpass']
     url = d['downloadUrl']
     filename = os.path.basename(url)
-    o = urllib2.build_opener( urllib2.HTTPCookieProcessor() )
+    o = urllib2.build_opener(urllib2.HTTPCookieProcessor() )
     urllib2.install_opener(o)
     p = urllib.urlencode({'user_name':user_name,'user_password':user_password})
     o.open("https://ursa.asfdaac.alaska.edu/cgi-bin/login",p)
@@ -304,7 +304,7 @@ class ThreadDownload(threading.Thread):
             elif d['collectionName'] == 'Supersites': 
                 print "Supersite download not working directly form the client at this time"
                 print "Please run the ssod commands separately"
-            elif 'ASF' in d['collectionName'] :
+            elif 'asf' in d['downloadUrl'] :
                 asf_dl(d, opt_dict)
             self.queue.task_done()
              
