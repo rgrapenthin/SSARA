@@ -283,8 +283,12 @@ def unavco_dl(d, opt_dict):
             f.close()
             return
     start = time.time()
-    with open(filename, 'wb') as T:
-        T.write(f.read())
+    CHUNK = 256 * 10240
+    with open(filename, 'wb') as fp:
+        while True:
+            chunk = f.read(CHUNK)
+            if not chunk: break
+            fp.write(chunk)
     total_time = time.time() - start
     mb_sec = (os.path.getsize(filename) / (1024 * 1024.0)) / total_time
     print "%s download time: %.2f secs (%.2f MB/sec)" % (filename, total_time, mb_sec)
@@ -302,7 +306,7 @@ class ThreadDownload(threading.Thread):
             if d['collectionName'] == 'WInSAR ESA' or 'EarthScope' in d['collectionName'] or 'TSX ' in d['collectionName']: 
                 unavco_dl(d, opt_dict)
             elif d['collectionName'] == 'Supersites': 
-                print "Supersite download not working directly form the client at this time"
+                print "Supersite download not working directly from the client at this time"
                 print "Please run the ssod commands separately"
             elif 'asf' in d['downloadUrl'] :
                 asf_dl(d, opt_dict)
