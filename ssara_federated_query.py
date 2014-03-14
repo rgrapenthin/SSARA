@@ -105,6 +105,7 @@ Usage Examples:
 
     resultsgroup = optparse.OptionGroup(parser, "Result Options", "These options handle the results returned by the API query")
     resultsgroup.add_option('--kml', action="store_true", default=False, help='create a KML of query') 
+    resultsgroup.add_option('--csv', action="store_true", default=False, help='create a CSV of query')
     resultsgroup.add_option('--print', action="store_true", default=False, help='print results to screen')
     resultsgroup.add_option('--download', action="store_true", default=False, help='download the data')
     resultsgroup.add_option('--parallel', action="store", dest="parallel", type="int", default=1, metavar='<ARG>', help='number of scenes to download in parallel (default=%default)')
@@ -114,6 +115,9 @@ Usage Examples:
     resultsgroup.add_option('--asfpass', action="store", dest="asfpass", type="str", metavar='<ARG>', help='ASF Archive password')
     resultsgroup.add_option('--ssuser', action="store", dest="ssuser", type="str", metavar='<ARG>', help='Supersites username')
     resultsgroup.add_option('--sspass', action="store", dest="sspass", type="str", metavar='<ARG>', help='Supersites password')
+    resultsgroup.add_option('--monthMin', action="store", dest="monMin",type="int", default=1, metavar='<ARG>', help='minimum integer month')
+    resultsgroup.add_option('--monthMax', action="store", dest="monMax",type="int", default=12, metavar='<ARG>', help='maximum integer month')
+    resultsgroup.add_option('--dem', action="store_true", default=False, help='print OpenTopo DEM WS string')
     parser.add_option_group(resultsgroup) 
     opts, remainder = parser.parse_args(argv)
     opt_dict= vars(opts)
@@ -159,12 +163,41 @@ Usage Examples:
     ### ORDER THE SCENES BY STARTTIME, NEWEST FIRST ###
     scenes = sorted(scenes, key=operator.itemgetter('startTime'), reverse=True)
     print "Found %d scenes" % len(scenes)
-    
+    scenes = [r for r in sorted(scenes, key=operator.itemgetter('startTime')) 
+                     if datetime.datetime.strptime(r['startTime'],"%Y-%m-%d %H:%M:%S").month >= opt_dict['monMin'] 
+                     and datetime.datetime.strptime(r['startTime'],"%Y-%m-%d %H:%M:%S").month <= opt_dict['monMax'] ]
+    print "Scenes after filtering for monthMin %d and monthMax %d: %d" % (opt_dict['monMin'],opt_dict['monMax'],len(scenes))
+
+    if opt_dict['dem']:
+        lats = []
+        lons = []
+        for scene in scenes:
+            fp = re.findall(r"[+-]? *(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", scene['stringFootprint'])
+            for t in map(lambda i: float(fp[i]), filter(lambda i: i % 2 == 1, range(len(fp)))):
+                lats.append(t)
+            for t in map(lambda i: float(fp[i]), filter(lambda i: i % 2 == 0, range(len(fp)))):
+                lons.append(t)
+        north = max(lats)+0.15
+        south = min(lats)-0.15
+        east = max(lons)+0.15
+        west = min(lons)-0.15
+        print 'wget -O dem.tif "http://ot-data1.sdsc.edu:9090/otr/getdem?north=%f&south=%f&east=%f&west=%f&demtype=SRTM30"' % (north,south,east,west)
+
     if not opt_dict['kml'] and not opt_dict['download'] and not opt_dict['print']:
         print "You did not specify the --kml, --print, or --download option, so there really is nothing else I can do for you now"
     if opt_dict['print']:
         for r in sorted(scenes, key=operator.itemgetter('startTime')):
             print ",".join(str(x) for x in [r['collectionName'], r['platform'], r['absoluteOrbit'], r['startTime'], r['stopTime'], r['relativeOrbit'], r['firstFrame'], r['finalFrame'], r['beamMode'], r['beamSwath'], r['flightDirection'], r['lookDirection'],r['polarization'], r['downloadUrl']])
+    ### MAKE THE CSV FILE ###
+    if opt_dict['csv']:
+        with open('ssara_federated_search_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")+".csv",'w') as CSV:
+            writer = csv.writer(CSV)
+            writer.writerow(['Collection','Platform','absOrbit','relOrbit','First Frame','Final Frame','Start Time','Stop Time','Beam Mode','Swath','Flight Dir','Look Dir','Polarization','Process Level','URL','WKT'])
+            for scene in sorted(scenes, key=operator.itemgetter('startTime')):
+                writer.writerow([scene['collectionName'],scene['platform'],scene['absoluteOrbit'],scene['relativeOrbit'],
+                                 scene['firstFrame'],scene['finalFrame'],scene['startTime'],scene['stopTime'],scene['beamMode'],
+                                 scene['beamSwath'],scene['flightDirection'],scene['lookDirection'],scene['polarization'],
+                                 scene['processingLevel'],scene['downloadUrl'],scene['stringFootprint']])
     ### GET A KML FILE, THE FEDERATED API HAS THIS OPTION ALREADY, SO MAKE THE SAME CALL AGAIN WITH output=kml OPTION ###
     if opt_dict['kml']:
         ssara_url = "http://www.unavco.org/ws/brokered/ssara/sar/search?output=kml&%s" % params
@@ -293,7 +326,7 @@ def unavco_dl(d, opt_dict):
     mb_sec = (os.path.getsize(filename) / (1024 * 1024.0)) / total_time
     print "%s download time: %.2f secs (%.2f MB/sec)" % (filename, total_time, mb_sec)
     f.close()
-    
+ 
 class ThreadDownload(threading.Thread):
     """Threaded SAR data download"""
     def __init__(self, queue):
@@ -306,7 +339,7 @@ class ThreadDownload(threading.Thread):
             if d['collectionName'] == 'WInSAR ESA' or 'EarthScope' in d['collectionName'] or 'TSX ' in d['collectionName']: 
                 unavco_dl(d, opt_dict)
             elif d['collectionName'] == 'Supersites': 
-                print "Supersite download not working directly from the client at this time"
+                print "Supersite download not working directly form the client at this time"
                 print "Please run the ssod commands separately"
             elif 'asf' in d['downloadUrl'] :
                 asf_dl(d, opt_dict)
