@@ -222,7 +222,7 @@ Usage Examples:
                 print "You need to specify your UNAVCO username and password in password_config.py"
                 print "If you don't have a UNAVCO username/password, limit the query with the --collection option\n"
                 allGood = False
-            if 'Supersites' in collection and not (opt_dict['ssuser']  and opt_dict['sspass']):
+            if collection=='Supersites' and not (opt_dict['ssuser']  and opt_dict['sspass']):
                 print "\n****************************************************************"
                 print "For the Supersites data, you need an EO Single Sign On username/password:"
                 print "Sign up for one here: https://eo-sso-idp.eo.esa.int/idp/AuthnEngine"
@@ -334,7 +334,7 @@ class ThreadDownload(threading.Thread):
     def run(self):
         while True:
             d, opt_dict = self.queue.get()
-            if d['collectionName'] == 'WInSAR ESA' or 'EarthScope' in d['collectionName'] or 'TSX ' in d['collectionName']: 
+            if 'unavco' in d['downloadUrl']:
                 unavco_dl(d, opt_dict)
             elif d['collectionName'] == 'Supersites': 
                 print "Supersite download not working directly form the client at this time"
