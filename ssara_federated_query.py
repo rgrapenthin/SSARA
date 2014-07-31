@@ -70,10 +70,10 @@ Usage Examples:
     ssara_federated_query.py --platform=ENVISAT,ERS-1,ERS-2 -r 170 -f 2925 --collectionName="WInSAR ESA,EarthScope ESA" --kml
     ssara_federated_query.py --platform=ENVISAT --intersectsWith=POLYGON((-118.3 33.7, -118.3 33.8, -118.0 33.8, -118.0 33.7, -118.3 33.7)) --kml
     
-  To download data, add the --download option and your user credentials (--unavuser=/--unavpass= for UNAVCO, --asfuser=/--asfpass= for ASF, and --ssuser=/--sspass= for Supersites)
-    ssara_federated_query.py --platform=ENVISAT -r 170 -f 2925 --download --unavuser=USERNAME --unavpass=PASSWORD
-    ssara_federated_query.py --platform=ENVISAT -r 170,392 -f 2925,657-693 -s 2003-01-01 -e 2008-01-01 --download --unavuser=USERNAME --unavpass=PASSWORD
-    ssara_federated_query.py --platform=ENVISAT,ERS-1,ERS-2 -r 170 -f 2925 --collection="WInSAR ESA,EarthScope ESA" --download --unavuser=USERNAME --unavpass=PASSWORD
+  To download data, add the --download option and add your user credentials to the password_config.py file
+    ssara_federated_query.py --platform=ENVISAT -r 170 -f 2925 --download 
+    ssara_federated_query.py --platform=ENVISAT -r 170,392 -f 2925,657-693 -s 2003-01-01 -e 2008-01-01 --download 
+    ssara_federated_query.py --platform=ENVISAT,ERS-1,ERS-2 -r 170 -f 2925 --collection="WInSAR ESA,EarthScope ESA" --download 
 """
     parser = MyParser(description=desc, epilog=epi, version='0.1rc1')
     querygroup = optparse.OptionGroup(parser, "Query Parameters", "These options are used for the API query.  "  
