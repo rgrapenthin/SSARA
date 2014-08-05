@@ -29,6 +29,7 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 from osgeo import gdal
 
@@ -36,19 +37,23 @@ if len(sys.argv)<3:
     print "USAGE: %s IN_FILE OUT_FILE" % sys.argv[0]
     print "\nExample: %s dem.tif roipac.dem" % sys.argv[0]
     exit()
+
+workdir = os.getcwd()
+input_name = workdir+'/'+sys.argv[1]
+output_name = workdir+'/'+sys.argv[2]
 #######################################
 ##### CREATE A ROI_PAC FORMAT DEM #####
 #######################################
-indataset = gdal.Open(sys.argv[1])
+indataset = gdal.Open(input_name)
 data = indataset.ReadAsArray()
 data.flatten()
-data.tofile(sys.argv[2])
+data.tofile(output_name)
 adfGeoTransform = indataset.GetGeoTransform(can_return_null = True)
 x_first = '%.12f' % adfGeoTransform[0]
 x_step = '%.12f' % adfGeoTransform[1]
 y_first = '%.12f' % adfGeoTransform[3]
 y_step = '%.12f' % adfGeoTransform[5]
-with open('roipac.dem.rsc','w') as RSC:
+with open(output_name+'.rsc','w') as RSC:
     RSC.write('WIDTH          '+str(indataset.RasterXSize)+'\n')
     RSC.write('FILE_LENGTH    '+str(indataset.RasterYSize)+'\n')
     RSC.write('X_FIRST        '+x_first+'\n')
@@ -60,3 +65,75 @@ with open('roipac.dem.rsc','w') as RSC:
     RSC.write('X_UNIT         degrees\n')
     RSC.write('Y_UNIT         degrees\n')
     RSC.write('PROJECTION     LATLON')
+
+### MAKE AN XML FILE FOR ISCE ###
+with open(output_name+'.xml','w') as XML:
+    XML.write('<imageFile>\n')
+    XML.write('    <property name="BYTE_ORDER">\n')
+    XML.write('        <value>l</value>\n')
+    XML.write('    </property>\n')
+    XML.write('    <property name="DATA_TYPE">\n')
+    XML.write('        <value>SHORT</value>\n')
+    XML.write('    </property>\n')
+    XML.write('    <property name="IMAGE_TYPE">\n')
+    XML.write('        <value>dem</value>\n')
+    XML.write('    </property>\n')
+    XML.write('    <property name="REFERENCE">\n')
+    XML.write('        <value>EGM96</value>\n')
+    XML.write('    </property>\n')
+    XML.write('    <property name="WIDTH">\n')
+    XML.write('        <value>'+str(indataset.RasterXSize)+'</value>\n')
+    XML.write('    </property>\n')
+    XML.write('    <property name="LENGTH">\n')
+    XML.write('        <value>'+str(indataset.RasterYSize)+'</value>\n')
+    XML.write('    </property>\n')
+    XML.write('    <property name="FILE_NAME">\n')
+    XML.write('        <value>'+output_name+'</value>\n')
+    XML.write('    </property>\n')
+    XML.write('    <property name="DELTA_LONGITUDE">\n')
+    XML.write('        <value>'+x_step+'</value>\n')
+    XML.write('    </property>\n')
+    XML.write('    <property name="DELTA_LATITUDE">\n')
+    XML.write('        <value>'+y_step+'</value>\n')
+    XML.write('    </property>\n')
+    XML.write('    <property name="FIRST_LONGITUDE">\n')
+    XML.write('        <value>'+x_first+'</value>\n')
+    XML.write('    </property>\n')
+    XML.write('    <property name="FIRST_LATITUDE">\n')
+    XML.write('        <value>'+y_first+'</value>\n')
+    XML.write('    </property>\n')
+    XML.write('    <component name="Coordinate1">\n')
+    XML.write('        <factorymodule>isceobj.Image</factorymodule>\n')
+    XML.write('        <factoryname>createCoordinate</factoryname>\n')
+    XML.write('        <doc>First coordinate of a 2D image (witdh).</doc>\n')
+    XML.write('        <property name="startingValue">\n')
+    XML.write('            <value>'+x_first+'</value>\n')
+    XML.write('        </property>\n')
+    XML.write('        <property name="delta">\n')
+    XML.write('            <value>'+x_step+'</value>\n')
+    XML.write("            <doc>{'doc': 'Coordinate quantization.'}</doc>\n")
+    XML.write('            <units>{}</units>\n')
+    XML.write('        </property>\n')
+    XML.write('        <property name="size">\n')
+    XML.write('            <value>'+str(indataset.RasterXSize)+'</value>\n')
+    XML.write("            <doc>{'doc': 'Coordinate size.'}</doc>\n")
+    XML.write('        </property>\n')
+    XML.write('    </component>\n')
+    XML.write('    <component name="Coordinate2">\n')
+    XML.write('        <factorymodule>isceobj.Image</factorymodule>\n')
+    XML.write('        <factoryname>createCoordinate</factoryname>\n')
+    XML.write('        <doc>Second coordinate of a 2D image (length).</doc>\n')
+    XML.write('        <property name="startingValue">\n')
+    XML.write('            <value>'+y_first+'</value>\n')
+    XML.write('        </property>\n')
+    XML.write('        <property name="delta">\n')
+    XML.write('            <value>'+y_step+'</value>\n')
+    XML.write("            <doc>{'doc': 'Coordinate quantization.'}</doc>\n")
+    XML.write('            <units>{}</units>\n')
+    XML.write('        </property>\n')
+    XML.write('        <property name="size">\n')
+    XML.write('            <value>'+str(indataset.RasterYSize)+'</value>\n')
+    XML.write("            <doc>{'doc': 'Coordinate size.'}</doc>\n")
+    XML.write('        </property>\n')
+    XML.write('    </component>\n')
+    XML.write('</imageFile>')
