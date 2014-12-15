@@ -5,7 +5,5 @@ This repository contains software developed as part of the SSARA project, most n
 
 For more information on the project and details about the API, see the WIKI (https://github.com/bakerunavco/SSARA/wiki)
 
-
 The API root for the SSARA federated query is:
-http://www.unavco.org/ws/brokered/ssara/sar/search
-If visiting this URL in a web browser, then the default will be a simple GUI for entering search parameters.
+http://web-services.unavco.org/brokered/ssara/
