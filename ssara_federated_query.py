@@ -115,8 +115,8 @@ Usage Examples:
 #    resultsgroup.add_option('--unavpass', action="store", dest="unavpass", type="str",metavar='<ARG>', help='UNAVCO SAR Archive password')
 #    resultsgroup.add_option('--asfuser', action="store", dest="asfuser", type="str", metavar='<ARG>', help='ASF Archive username')
 #    resultsgroup.add_option('--asfpass', action="store", dest="asfpass", type="str", metavar='<ARG>', help='ASF Archive password')
-    resultsgroup.add_option('--ssuser', action="store", dest="ssuser", type="str", metavar='<ARG>', help='Supersites username')
-    resultsgroup.add_option('--sspass', action="store", dest="sspass", type="str", metavar='<ARG>', help='Supersites password')
+#    resultsgroup.add_option('--ssuser', action="store", dest="ssuser", type="str", metavar='<ARG>', help='Supersites username')
+#    resultsgroup.add_option('--sspass', action="store", dest="sspass", type="str", metavar='<ARG>', help='Supersites password')
     resultsgroup.add_option('--monthMin', action="store", dest="monMin",type="int", default=1, metavar='<ARG>', help='minimum integer month')
     resultsgroup.add_option('--monthMax', action="store", dest="monMax",type="int", default=12, metavar='<ARG>', help='maximum integer month')
     resultsgroup.add_option('--dem', action="store_true", default=False, help='OT call for DEM')
@@ -153,7 +153,7 @@ Usage Examples:
 
     ### QUERY THE APIs AND GET THE JSON RESULTS ###
     params = urllib.urlencode(query_dict)
-    ssara_url = "http://www.unavco.org/ws/brokered/ssara/sar/search?%s" % params
+    ssara_url = "http://web-services.unavco.org/brokered/ssara/api/sar/search?%s" % params
     print "Running SSARA API Query"
     t = time.time()
     f = urllib2.urlopen(ssara_url)
@@ -203,7 +203,7 @@ Usage Examples:
 #                CSV.write(",".join(str(x) for x in [r['collectionName'], r['platform'], r['absoluteOrbit'], r['startTime'], r['stopTime'], r['relativeOrbit'], r['firstFrame'], r['finalFrame'], r['beamMode'], r['beamSwath'], r['flightDirection'], r['lookDirection'],r['polarization'], r['downloadUrl']])+"\n")
     ### GET A KML FILE, THE FEDERATED API HAS THIS OPTION ALREADY, SO MAKE THE SAME CALL AGAIN WITH output=kml OPTION ###
     if opt_dict['kml']:
-        ssara_url = "http://www.unavco.org/ws/brokered/ssara/sar/search?output=kml&%s" % params
+        ssara_url = "http://web-services.unavco.org/brokered/ssara/api/sar/search?output=kml&%s" % params
         print "Getting KML"
         t = time.time()
         req = urllib2.Request(ssara_url)
@@ -222,12 +222,12 @@ Usage Examples:
                 print "You need to specify your UNAVCO username and password in password_config.py"
                 print "If you don't have a UNAVCO username/password, limit the query with the --collection option\n"
                 allGood = False
-            if collection=='Supersites' and not (opt_dict['ssuser']  and opt_dict['sspass']):
+            if collection=='Supersites':
                 print "\n****************************************************************"
                 print "For the Supersites data, you need an EO Single Sign On username/password:"
                 print "Sign up for one here: https://eo-sso-idp.eo.esa.int/idp/AuthnEngine"
-                print "The SSO Downloader is need to download the data."
-                print "Get the downloader here: http://supersites.earthobservations.org/sso-downloader-0.1.tar.gz"
+                print "The secp program is needed to download data from the command line"
+                print "Get the downloader here: http://sourceforge.net/projects/secp/"
                 print "****************************************************************\n"
             if 'ASF' in collection and not (password_config.asfuser and password_config.asfpass ):
                 print "Can't download collection: %s" % collection
