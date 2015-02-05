@@ -301,7 +301,7 @@ def unavco_dl(d, opt_dict):
     user_password = password_config.unavpass
     url = d['downloadUrl']
     passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-    passman.add_password(None, 'http://facility.unavco.org/data/sar/', user_name, user_password)
+    passman.add_password(None, 'http://www.unavco.org/data/imaging/sar/', user_name, user_password)
     authhandler = urllib2.HTTPDigestAuthHandler(passman)
     opener = urllib2.build_opener(authhandler)    
     filename = os.path.basename(url)
