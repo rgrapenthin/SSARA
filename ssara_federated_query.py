@@ -233,20 +233,21 @@ Usage Examples:
                 print "You need to specify your UNAVCO username and password in password_config.py"
                 print "If you don't have a UNAVCO username/password, limit the query with the --collection option\n"
                 allGood = False
-            if collection=='Supersites':
+            if 'Supersites VA4' in collection and not (password_config.eossouser and password_config.eossopass )::
+                print "Can't download collection: %s" % collection
+                print "You need to specify your EO Single Sign On username and password in password_config.py"
                 print "\n****************************************************************"
-                print "For the Supersites data, you need an EO Single Sign On username/password:"
+                print "For the Supersites VA4 data, you need an EO Single Sign On username/password:"
                 print "Sign up for one here: https://eo-sso-idp.eo.esa.int/idp/AuthnEngine"
-                print "The secp program is needed to download data from the command line"
-                print "Get the downloader here: http://sourceforge.net/projects/secp/"
                 print "****************************************************************\n"
+                allGood = False
             if 'ASF' in collection and not (password_config.asfuser and password_config.asfpass ):
                 print "Can't download collection: %s" % collection
                 print "You need to specify your ASF username and password in password_config.py"
                 print "If you don't have a ASF username/password, limit the query with the --collection option\n"
                 allGood = False
         if not allGood:
-            print "Exiting now since some username/password are need for data download to continue"
+            print "Exiting now since some username/password are needed for data download to continue"
             exit()
         print "Downloading data now, %d at a time." % opt_dict['parallel']
         #create a queue for parallel downloading
@@ -258,16 +259,9 @@ Usage Examples:
             t.start()
         #populate queue with data   
         for d in sorted(scenes, key=operator.itemgetter('collectionName')):
-            if d['collectionName'] == 'Supersites':
-                if 'archive4' in d['downloadUrl']:
-                    print "ssod -d . -u $ARCHIVE4_USERNAME -p $ARCHIVE4_PASSWORD %s" % d['downloadUrl']
-                elif 'archive2' in d['downloadUrl']:
-                    print "wget --user=$SUPERSITES_USERNAME --password=$SUPERSITES_PASSWORD %s" % d['downloadUrl']
-            else:
-                queue.put([d, opt_dict])
+            queue.put([d, opt_dict])
         #wait on the queue until everything has been processed     
         queue.join()
-        
         
 def asf_dl(d, opt_dict):
     user_name = password_config.asfuser
@@ -336,6 +330,14 @@ def unavco_dl(d, opt_dict):
     print "%s download time: %.2f secs (%.2f MB/sec)" % (filename, total_time, mb_sec)
     f.close()
     
+def va4_dl(d, opt_dict):
+    user_name = password_config.eossouser
+    user_password = password_config.eossopass
+    url = d['downloadUrl']
+    filename = os.path.basename(url)
+    secp_path = os.path.dirname(sys.argv[0])+"/data_utils/secp"
+    print """%s -C %s:%s %s""" % (secp_path,user_name,user_password,d['downloadUrl'])
+
 class ThreadDownload(threading.Thread):
     """Threaded SAR data download"""
     def __init__(self, queue):
@@ -347,11 +349,10 @@ class ThreadDownload(threading.Thread):
             d, opt_dict = self.queue.get()
             if 'unavco' in d['downloadUrl']:
                 unavco_dl(d, opt_dict)
-            elif d['collectionName'] == 'Supersites': 
-                print "Supersite download not working directly form the client at this time"
-                print "Please run the ssod commands separately"
             elif 'asf' in d['downloadUrl'] :
                 asf_dl(d, opt_dict)
+            elif d['collectionName'] == 'Supersites VA4':
+                va4_dl(d,opt_dict)
             self.queue.task_done()
              
 if __name__ == '__main__':

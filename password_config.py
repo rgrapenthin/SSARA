@@ -3,3 +3,7 @@ unavpass=""
 
 asfuser=""
 asfpass=""
+
+eossouser=""
+eossopass=""
+
