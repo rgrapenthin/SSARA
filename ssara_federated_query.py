@@ -167,6 +167,12 @@ Usage Examples:
     scenes = data['resultList']
     print "SSARA API query: %f seconds" % (time.time()-t)
 
+    if data['message']:
+        print "###########################"
+        for d in data['message']:
+            print d
+        print "###########################"
+
     ### ORDER THE SCENES BY STARTTIME, NEWEST FIRST ###
     scenes = sorted(scenes, key=operator.itemgetter('startTime'), reverse=True)
     print "Found %d scenes" % len(scenes)
