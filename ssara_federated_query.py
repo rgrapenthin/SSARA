@@ -74,8 +74,13 @@ Usage Examples:
     ssara_federated_query.py --platform=ENVISAT -r 170 -f 2925 --download 
     ssara_federated_query.py --platform=ENVISAT -r 170,392 -f 2925,657-693 -s 2003-01-01 -e 2008-01-01 --download 
     ssara_federated_query.py --platform=ENVISAT,ERS-1,ERS-2 -r 170 -f 2925 --collection="WInSAR ESA,EarthScope ESA" --download 
+
+  UAVSAR flight line is mapped to relative orbit in the API. Also the default for the command line client is L0/L1.0 so you will
+  need to use the "processingLevel" option, either set it to blank for everything or to something specific.  
+    ssara_federated_query.py --platform=UAVSAR --relativeOrbit=05901 --processingLevel='' --intersectsWith='POINT(-155.3 19.4)'
+    ssara_federated_query.py --platform=UAVSAR --relativeOrbit=05901 --processingLevel='INTERFEROMETRY' --intersectsWith='POINT(-155.3 19.4)'
 """
-    parser = MyParser(description=desc, epilog=epi, version='0.1rc1')
+    parser = MyParser(description=desc, epilog=epi, version='1.0')
     querygroup = optparse.OptionGroup(parser, "Query Parameters", "These options are used for the API query.  "  
                                       "Use options to limit what is returned by the search. These options act as a way "
                                       "to filter the results and narrow down the search results.")
