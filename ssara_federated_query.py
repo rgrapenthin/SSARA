@@ -44,6 +44,7 @@ import re
 import optparse
 import threading
 import Queue
+import subprocess as sub
 
 import password_config
 
@@ -233,7 +234,7 @@ Usage Examples:
                 print "You need to specify your UNAVCO username and password in password_config.py"
                 print "If you don't have a UNAVCO username/password, limit the query with the --collection option\n"
                 allGood = False
-            if 'Supersites VA4' in collection and not (password_config.eossouser and password_config.eossopass )::
+            if 'Supersites VA4' in collection and not (password_config.eossouser and password_config.eossopass ):
                 print "Can't download collection: %s" % collection
                 print "You need to specify your EO Single Sign On username and password in password_config.py"
                 print "\n****************************************************************"
@@ -336,8 +337,15 @@ def va4_dl(d, opt_dict):
     url = d['downloadUrl']
     filename = os.path.basename(url)
     secp_path = os.path.dirname(sys.argv[0])+"/data_utils/secp"
-    print """%s -C %s:%s %s""" % (secp_path,user_name,user_password,d['downloadUrl'])
-
+    cmd = """%s -C %s:%s %s""" % (secp_path,user_name,user_password,d['downloadUrl'])
+    print "Downloading:",url
+    start = time.time()
+    pipe = sub.Popen(cmd, shell=True, stdout=sub.PIPE, stderr=sub.STDOUT).stdout
+    pipe.read()
+    total_time = time.time() - start
+    mb_sec = (os.path.getsize(filename) / (1024 * 1024.0)) / total_time
+    print "%s download time: %.2f secs (%.2f MB/sec)" % (filename, total_time, mb_sec)
+    
 class ThreadDownload(threading.Thread):
     """Threaded SAR data download"""
     def __init__(self, queue):
