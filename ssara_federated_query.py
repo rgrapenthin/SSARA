@@ -125,6 +125,7 @@ Usage Examples:
 #    resultsgroup.add_option('--sspass', action="store", dest="sspass", type="str", metavar='<ARG>', help='Supersites password')
     resultsgroup.add_option('--monthMin', action="store", dest="monMin",type="int", default=1, metavar='<ARG>', help='minimum integer month')
     resultsgroup.add_option('--monthMax', action="store", dest="monMax",type="int", default=12, metavar='<ARG>', help='maximum integer month')
+    resultsgroup.add_option('--noswath', action="store_true", default=False, help='Enforce first_frame==final_frame (i.e. not a swath)')
     resultsgroup.add_option('--dem', action="store_true", default=False, help='OT call for DEM')
     parser.add_option_group(resultsgroup) 
     opts, remainder = parser.parse_args(argv)
@@ -181,6 +182,9 @@ Usage Examples:
                      if datetime.datetime.strptime(r['startTime'],"%Y-%m-%d %H:%M:%S").month >= opt_dict['monMin'] 
                      and datetime.datetime.strptime(r['startTime'],"%Y-%m-%d %H:%M:%S").month <= opt_dict['monMax'] ]
     print "Scenes after filtering for monthMin %d and monthMax %d: %d" % (opt_dict['monMin'],opt_dict['monMax'],len(scenes))
+    if opt_dict['noswath']:
+        scenes = [ r for r in sorted(scenes) if r['firstFrame']==r['finalFrame'] ]
+        print "Scenes after filtering out swaths: %d" % len(scenes)
 
     if opt_dict['dem']:
         lats = []
