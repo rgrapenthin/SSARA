@@ -285,7 +285,7 @@ def asf_dl(d, opt_dict):
         log = open('missing.txt','a')
         log.write(filename + '\n')
         log.close()
-        exit()
+        return
     dl_file_size = int(f.info()['Content-Length'])
     if os.path.exists(filename):
         file_size = os.path.getsize(filename)
